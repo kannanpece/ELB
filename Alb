@@ -1,0 +1,36 @@
+# Retrieve client_id and client_secret from environment variables
+$clientId = $env:CROWDSTRIKE_CLIENT_ID
+$clientSecret = $env:CROWDSTRIKE_CLIENT_SECRET
+
+# Check if environment variables are set
+if (-not $clientId -or -not $clientSecret) {
+    Write-Error "Environment variables CROWDSTRIKE_CLIENT_ID and CROWDSTRIKE_CLIENT_SECRET must be set."
+    exit
+}
+
+# Define the API endpoint
+$url = "https://api.eu-1.crowdstrike.com/oauth2/token"
+
+# Define the headers
+$headers = @{
+    "accept" = "application/json"
+}
+
+# Define the body with client_id and client_secret
+$body = @{
+    "client_id" = $clientId
+    "client_secret" = $clientSecret
+}
+
+# Send the POST request to get the token
+try {
+    $response = Invoke-WebRequest -Uri $url -Method Post -Headers $headers -Body $body -ContentType "application/x-www-form-urlencoded"
+    # Extract the token from the response
+    $token = ($response.Content | ConvertFrom-Json).access_token
+    # Output the token
+    Write-Output "Token: $token"
+} catch {
+    Write-Error "Failed to retrieve token: $_"
+    Write-Output $_.Exception.Response.StatusCode.Value__
+    Write-Output $_.Exception.Response.StatusDescription
+}
